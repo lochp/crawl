@@ -34,14 +34,31 @@ function insert_into_test_score_table($data){
     $wpdb->insert( $table_name, $data);
 }
 
+function myplugin_ajaxurl() {
+    echo '<script type="text/javascript">
+           window.ajaxUrl = "' . admin_url('admin-ajax.php') . '";
+         </script>';
+}
+add_action('wp_head', 'myplugin_ajaxurl');
+
 // include custom jQuery
 function include_handle_auto_js() {
 	wp_deregister_script('jquery');
-    wp_enqueue_script('jquery', '/wp-includes/js/crawlJs/jeasyui/jquery.min.js', array(), null, true);
+    wp_enqueue_script('jquery', '/wp-includes/js/crawlJs/jquery.min.js', array(), null, true);
     wp_enqueue_script('crawlScript', '/wp-includes/js/crawlJs/crawlScript.js', array(), null, true);
 }
 
 add_action('wp_enqueue_scripts', 'include_handle_auto_js');
+
+function load_test_score_data(){
+    $sbd = $_POST['sbd'];
+    $college = $_POST['college'];
+    $data = crawl_data($sbd, $college);
+    echo json_encode($data);
+    wp_die();
+}
+
+add_action( 'wp_ajax_load_test_score_data', 'load_test_score_data' );
 
 function getSslPage($url) {
     $ch = curl_init();
@@ -73,78 +90,35 @@ function parseToArray($xpath,$class){
 }
 
 function buildUrl($q, $college, $area){
+    // $url = 'https://diemthi.vnexpress.net/index/result?q=64001347&college=64&area=2';
     $url = 'https://diemthi.vnexpress.net/index/result?q=' . $q . '&college=' . $college . '&area=' . $area;
     return $url;
 }
 
-function crawl_data(){
-    // $url = 'https://diemthi.vnexpress.net/index/result?q=64001347&college=64&area=2';
+function crawl_data($sbd, $college){
     require_once( dirname( dirname( __FILE__ ) ) . '/vnexpressData/simple_html_dom.php' );
-    for($p = 1; $p <=65; $p ++){
-        for ($index = 0; $index <= 999999; $index++){
-            $college = $p;
-            if ($college < 10){
-                $college = '0'.$college;
-            }else{
-                $college = ''.$college;
-            }
-
-            $qIdx = $index.'';
-            if ($index < 10){
-                $qIdx = '00000'.$index;
-            }else if ($index < 100){
-                $qIdx = '0000'.$index;
-            }else if ($index < 1000){
-                $qIdx = '000'.$index;
-            }else if ($index < 10000){
-                $qIdx = '00'.$index;
-            }else if ($index < 100000){
-                $qIdx = '0'.$index;
-            }
-
-            $qSearch = $college.$qIdx;
-
-            $url = buildUrl($qSearch, $college, 2);
-            $r = getSslPage($url);
-            if (strlen($r) > 100){
-                $r = substr($r, 18, strlen($r) - 2);
-                $html = str_get_html('<html><body>'.$r.'</body></html>');
-                
-                $j = 0;
-                $arr = array();
-                foreach($html->find('a') as $e){
+    $url = buildUrl($sbd, $college, 2);
+    $r = getSslPage($url);
+    $arr = array();
+    if (strlen($r) > 100){
+        $r = substr($r, 18, strlen($r) - 2);
+        $html = str_get_html('<html><body>'.$r.'</body></html>');
+        $j = 0;
+        foreach($html->find('a') as $e){
+            $arr[$j++] = $e->nodes[0];
+        }
+        
+        $i = 0;
+        foreach($html->find('td') as $e){
+            if ($i >= 17){
+                if ($e->nodes[0] != '<\/td>'){
                     $arr[$j++] = $e->nodes[0];
+                }else{
+                    $arr[$j++] = '';
                 }
-                
-                $i = 0;
-                foreach($html->find('td') as $e){
-                    if ($i >= 17){
-                        if ($e->nodes[0] != '<\/td>'){
-                            $arr[$j++] = $e->nodes[0];
-                        }else{
-                            $arr[$j++] = '';
-                        }
-                    }
-                    $i++;
-                }
-                
-                insert_into_test_score_table(array(
-                    'soBaoDanh' => $arr[0],
-                    'toan' => $arr[1],
-                    'nguVan' => $arr[2],
-                    'ngoaiNgu' => $arr[3],
-                    'vaLy' => $arr[4],
-                    'hoaHoc' => $arr[5],
-                    'sinhHoc' => $arr[6],
-                    'diemTb1' => $arr[7],
-                    'lichSu' => $arr[8],
-                    'diaLy' => $arr[9],
-                    'gdcd' => $arr[10],
-                    'diemTb2' => $arr[11],
-                ));
             }
+            $i++;
         }
     }
+    return $arr;
 }
-
-// crawl_data();
