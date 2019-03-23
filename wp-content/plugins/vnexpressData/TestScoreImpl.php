@@ -55,6 +55,7 @@ function load_test_score_data(){
     $college = $_POST['college'];
     $data = crawl_data($sbd, $college);
     echo json_encode($data);
+
     wp_die();
 }
 
@@ -77,7 +78,7 @@ function parseToArray($xpath,$class){
 	$xpathquery="//span[@class='".$class."']";
 	$elements = $xpath->query($xpathquery);
 
-	if (!is_null($elements)) {	
+	if (!is_null($elements)) {
 		$resultarray=array();
 		foreach ($elements as $element) {
 		    $nodes = $element->childNodes;
@@ -105,14 +106,13 @@ function crawl_data($sbd, $college){
         $html = str_get_html('<html><body>'.$r.'</body></html>');
         $j = 0;
         foreach($html->find('a') as $e){
-            $arr[$j++] = $e->nodes[0];
+            $arr[$j++] = (string)$e->nodes[0];
         }
-        
         $i = 0;
         foreach($html->find('td') as $e){
             if ($i >= 17){
                 if ($e->nodes[0] != '<\/td>'){
-                    $arr[$j++] = $e->nodes[0];
+                    $arr[$j++] = (string)$e->nodes[0];
                 }else{
                     $arr[$j++] = '';
                 }
