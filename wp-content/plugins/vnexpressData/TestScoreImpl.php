@@ -46,6 +46,9 @@ function include_handle_auto_js() {
 	wp_deregister_script('jquery');
     wp_enqueue_script('jquery', '/wp-includes/js/crawlJs/jquery.min.js', array(), null, true);
     wp_enqueue_script('crawlScript', '/wp-includes/js/crawlJs/crawlScript.js', array(), null, true);
+    if (is_page( 5 )){
+        wp_enqueue_style( 'tomes-style', '/wp-includes/js/crawlJs/crawl.css' );
+    }
 }
 
 add_action('wp_enqueue_scripts', 'include_handle_auto_js');
@@ -53,7 +56,7 @@ add_action('wp_enqueue_scripts', 'include_handle_auto_js');
 function load_test_score_data(){
     $sbd = $_POST['sbd'];
     $college = $_POST['college'];
-    $data = crawl_data($sbd, $college);
+    $data = crawl_data_2017($sbd, $college);
     echo json_encode($data);
 
     wp_die();
@@ -90,15 +93,81 @@ function parseToArray($xpath,$class){
 	}
 }
 
-function buildUrl($q, $college, $area){
+function buildUrl_2018($q, $college, $area){
     // $url = 'https://diemthi.vnexpress.net/index/result?q=64001347&college=64&area=2';
     $url = 'https://diemthi.vnexpress.net/index/result?q=' . $q . '&college=' . $college . '&area=' . $area;
     return $url;
 }
 
-function crawl_data($sbd, $college){
+function crawl_data_2018($sbd, $college){
     require_once( dirname( dirname( __FILE__ ) ) . '/vnexpressData/simple_html_dom.php' );
-    $url = buildUrl($sbd, $college, 2);
+    $url = buildUrl_2018($sbd, $college, 2);
+    $r = getSslPage($url);
+    $arr = array();
+    if (strlen($r) > 100){
+        $r = substr($r, 18, strlen($r) - 2);
+        $html = str_get_html('<html><body>'.$r.'</body></html>');
+        $j = 0;
+        foreach($html->find('a') as $e){
+            $arr[$j++] = (string)$e->nodes[0];
+        }
+        $i = 0;
+        foreach($html->find('td') as $e){
+            if ($i >= 17){
+                if ($e->nodes[0] != '<\/td>'){
+                    $arr[$j++] = (string)$e->nodes[0];
+                }else{
+                    $arr[$j++] = '';
+                }
+            }
+            $i++;
+        }
+    }
+    return $arr;
+}
+
+function buildUrl_2017($q, $college, $area){
+    // $url = 'https://diemthi.vnexpress.net/index/result?q=64001347&college=64&area=2';
+    $url = 'https://diemthi.vnexpress.net/diem-thi-nam-2017/result?q=' . $q . '&college=' . $college . '&area=' . $area;
+    return $url;
+}
+
+function crawl_data_2017($sbd, $college){
+    require_once( dirname( dirname( __FILE__ ) ) . '/vnexpressData/simple_html_dom.php' );
+    $url = buildUrl_2017($sbd, $college, 2);
+    $r = getSslPage($url);
+    $arr = array();
+    if (strlen($r) > 100){
+        $r = substr($r, 18, strlen($r) - 2);
+        $html = str_get_html('<html><body>'.$r.'</body></html>');
+        $j = 0;
+        foreach($html->find('a') as $e){
+            $arr[$j++] = (string)$e->nodes[0];
+        }
+        $i = 0;
+        foreach($html->find('td') as $e){
+            if ($i >= 17){
+                if ($e->nodes[0] != '<\/td>'){
+                    $arr[$j++] = (string)$e->nodes[0];
+                }else{
+                    $arr[$j++] = '';
+                }
+            }
+            $i++;
+        }
+    }
+    return $arr;
+}
+
+function buildUrl_2016($q, $college, $area){
+    // $url = 'https://diemthi.vnexpress.net/index/result?q=64001347&college=64&area=2';
+    $url = 'https://diemthi.vnexpress.net/index/result?q=' . $q . '&college=' . $college . '&area=' . $area;
+    return $url;
+}
+
+function crawl_data_2016($sbd, $college){
+    require_once( dirname( dirname( __FILE__ ) ) . '/vnexpressData/simple_html_dom.php' );
+    $url = buildUrl_2016($sbd, $college, 2);
     $r = getSslPage($url);
     $arr = array();
     if (strlen($r) > 100){

@@ -1,0 +1,10 @@
+.search-content th, .search-content td {
+	border: solid 1px #c9c9c9;	
+	line-height: 22px;
+}
+td {
+	height: 22px;
+}
+.grid {
+	max-width: 1200px !important;	
+}
